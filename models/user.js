@@ -9,16 +9,13 @@ var Schema = mongoose.Schema;
 
 
 // defining schema types, instance of a model is a document 
-var driverSchema = new Schema({
+var userSchema = new Schema({
   fbID: Number, 
-  fbProfile: String, 
-  leavingDateTime: String,
-  leavingLocation: String, 
-  arrivingLocation: String, 
-  price: Number, 
-  step: Number
+  rdID: String, 
+  type: String, 
+  createdAt: Date
 });
 
-var Driver = mongoose.model('Driver', driverSchema);
+var User = mongoose.model('User', userSchema);
 
-module.exports = Driver;
+module.exports = User;

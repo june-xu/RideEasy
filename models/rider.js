@@ -12,15 +12,14 @@ var Schema = mongoose.Schema;
 // only taking rides for one person atm 
 
 var riderSchema = new Schema({
-  // name: String,
   fbID: Number, 
   fbProfile: String, 
-  phoneNumber: Number,
   foundRide: Boolean,
   step: Number, 
   requestedDateTime: String, 
   requestedFromLocation: String,
-  requestedToLocation: String
+  requestedToLocation: String, 
+  createdAt: Date
 });
 
 var Rider = mongoose.model('Rider', riderSchema);
