@@ -132,7 +132,7 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 		case 3:
 			console.log("step3"); 
 			// update where they want to go 
-			Driver.findOneAndUpdate({_id: id}, { "$set": { "requestedToLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
+			Driver.findOneAndUpdate({_id: id}, { "$set": { "arrivingLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
 			  		console.log("Could not find and update driver.")
 			  		sendMessage(senderId, {text: "I cannot understand your request. Where are you going?"}); 
@@ -150,7 +150,7 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			  		sendMessage(senderId, {text: "I cannot understand your request. How much do you want to charge per guest?"}); 
 			  	} else {
 			  		sendMessage(senderId, {text: "Thanks for your information. One second as we try to find you riders."});
-			  		sendMessage(senderId, {text: "I have found", findRiders()}; 
+			  		console.log(findRiders(updatedDriver.leavingDateTime, updatedDriver.leavingLocation, updatedDriver.arrivingLocation)); 
 			  	}
 			});
 			break;
@@ -158,12 +158,16 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 }
 
 function findRiders(dateTime, from, to) {
+	console.log("datetime", dateTime); 
+	console.log("from", from); 
+	console.log("to", to); 
 	Rider.find({ requestedDateTime: dateTime, requestedFromLocation: from, requestedToLocation: to}, function (err, docs) {
 		if (docs) {
+			console.log("docs", docs); 
 			return docs
 		} else {
-			return {}
-			console.log("Error finding rider.");  
+			console.log("jks didnt find anything"); 
+			return "DIDNT FIND ANYTHINGGG"
 		} 
 	}); 
 }
