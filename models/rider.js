@@ -19,7 +19,6 @@ var riderSchema = new Schema({
   requestedDateTime: String, 
   requestedFromLocation: String,
   requestedToLocation: String, 
-  createdAt: Date
 });
 
 var Rider = mongoose.model('Rider', riderSchema);

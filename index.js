@@ -150,10 +150,22 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			  		sendMessage(senderId, {text: "I cannot understand your request. How much do you want to charge per guest?"}); 
 			  	} else {
 			  		sendMessage(senderId, {text: "Thanks for your information. One second as we try to find you riders."});
+			  		sendMessage(senderId, {text: "I have found", findRiders()}; 
 			  	}
 			});
 			break;
 	}	
+}
+
+function findRiders(dateTime, from, to) {
+	Rider.find({ requestedDateTime: dateTime, requestedFromLocation: from, requestedToLocation: to}, function (err, docs) {
+		if (docs) {
+			return docs
+		} else {
+			return {}
+			console.log("Error finding rider.");  
+		} 
+	}); 
 }
 
 function processRiderStep(id, step, senderId, formattedMsg) {
@@ -164,12 +176,9 @@ function processRiderStep(id, step, senderId, formattedMsg) {
 		    // hopefully format will be "jan-6 11:30pm"
 			// set leaving date and time
 			var dateTime = moment(formattedMsg, "MMM D h:ma").format(); 
-			console.log("this is the date time", dateTime)
 			if (dateTime) {
 				Rider.findOneAndUpdate({_id: id}, { "$set": { "requestedDateTime": dateTime, "step": step + 1}}, {new: true}, 
 					function (err, updatedRider) {
-					console.log("updated rider", updatedRider); 
-					console.log("err", err); 
 					if (err) {
 						console.log("Could not find and update rider."); 
 						sendMessage(senderId, {text: "I cannot` understand your request. Please format it like jan 6 11:30pm"}); 
@@ -207,7 +216,6 @@ function processRiderStep(id, step, senderId, formattedMsg) {
 
 // find the user
 function findDriver(id, senderId, formattedMsg) {
-	console.log("finddriverid:", id); 
 	Driver.findOne({ _id: id}, function (err, doc) {
 		if (doc) {
 			console.log("processing driver step.."); 
@@ -230,7 +238,6 @@ function findRider(id, senderId, formattedMsg) {
 }
 
 function createUser(fbID, rdID, type) {
-	console.log("created user with rdid", rdID); 
 	let user = new User({
 		fbID: fbID, 
 		rdID: rdID, 
@@ -322,13 +329,9 @@ function processMessage(event) {
         if (message.text) {
 			var formattedMsg = message.text.toLowerCase().trim();
 	        User.findOne({ fbID: senderId}, {}, { sort: {_id: -1} }, function (err, doc) {
-	        	console.log("found user", doc); 
 	        	if (doc && doc.type == "Driver") {
-	        		console.log("is a driver"); 
-	        		console.log("finddriverid:", doc.rdID); 
 	        		findDriver(doc.rdID, senderId, formattedMsg); 
 	        	} else if (doc && doc.type == "Rider") {
-	        		console.log("is a rider"); 
 	        		findRider(doc.rdID, senderId, formattedMsg); 
 	        	} else {
 	        		console.log("Error finding user."); 
