@@ -57,7 +57,6 @@ app.post("/webhook", function (req, res) {
 			    if (event.postback) {
 			    	processPostback(event);
 			    } else if (event.message) {
-			    	console.log("event.message", event.message); 
 			    	processMessage(event); 
 			    }
 			  });
@@ -97,18 +96,14 @@ function findType(userId) {
 function processDriverStep(id, step, senderId, formattedMsg) {
 	switch (step) {
 		case 1:
-			console.log("step1"); 
 		    // hopefully format will be "jan-6 11:30pm"
 			// set leaving date and time
 			var dateTime = moment(formattedMsg, "MMM D h:ma").format(); 
-			console.log("this is the date time", dateTime)
 			if (dateTime) {
 				Driver.findOneAndUpdate({_id: id}, { "$set": { "leavingDateTime": dateTime, "step": step + 1}}, {new: true}, 
 					function (err, updatedDriver) {
-					console.log("updated driver", updatedDriver); 
-					console.log("err", err); 
 					if (err) {
-						console.log("Could not find and update driver."); 
+						console.log("Could not find and update driver", err);  
 						sendMessage(senderId, {text: "I cannot` understand your request. Please format it like jan 6 11:30pm"}); 
 				  	} else {
 				  		sendMessage(senderId, {text: "Where are you leaving from?"}); 
@@ -117,7 +112,6 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			}
 			break; 
 		case 2:
-			console.log("step2"); 
 			// update where they are leaving from 
 			// must be one word
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "leavingLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
@@ -130,11 +124,10 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			});
 			break;    
 		case 3:
-			console.log("step3"); 
 			// update where they want to go 
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "arrivingLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
-			  		console.log("Could not find and update driver.")
+					console.log("Could not find and update driver", err);  
 			  		sendMessage(senderId, {text: "I cannot understand your request. Where are you going?"}); 
 			  	} else {
 			  		sendMessage(senderId, {text: "How much do you want to charge for one guest?"});
@@ -142,38 +135,39 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			});
 			break;
 		case 4:
-			console.log("step4"); 
 			// update where they want to go 
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "price": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
-			  		console.log("Could not find and update driver.")
+			  		console.log("Could not find and update driver", err)
 			  		sendMessage(senderId, {text: "I cannot understand your request. How much do you want to charge per guest?"}); 
 			  	} else {
-			  		sendMessage(senderId, {text: "Thanks for your information. One second as we try to find you riders."});
-			  		console.log(findRiders(updatedDriver.leavingDateTime, updatedDriver.leavingLocation, updatedDriver.arrivingLocation)); 
+			  		findRiders(updatedDriver.leavingDateTime, updatedDriver.leavingLocation, updatedDriver.arrivingLocation, senderId); 
 			  	}
 			});
 			break;
 	}	
 }
 
-function findRiders(dateTime, from, to) {
-	console.log("datetime", dateTime); 
-	console.log("from", from); 
-	console.log("to", to); 
-	Rider.find({ requestedDateTime: dateTime, requestedFromLocation: from, requestedToLocation: to}, function (err, docs) {
-		if (docs) {
-			console.log("docs", docs); 
-			return docs
+
+function findRiders(dateTime, from, to, senderId) {
+	Rider.find({ requestedDateTime: dateTime, requestedFromLocation: from, requestedToLocation: to}, function (err, riders) {
+		if (err) {
+			console.log("Uh oh. An error occured while finding drivers.")
+			sendMessage(senderId, {text: "An error occured. Please delete this conversation and restart."}); 
+		} else if (riders.length > 0) {
+			var responseString = "Success! We have found match(es)! These are their Facebook links so you can message them! "; 
+			var r; 
+			for (r in riders) { responseString += `Facebook Profile : ${riders[r].fbProfile} `; }
+			sendMessage(senderId, {text: responseString}); 
 		} else {
-			console.log("jks didnt find anything"); 
-			return "DIDNT FIND ANYTHINGGG"
+			sendMessage(senderId, {text: "Sorry no matches today. Check again later!"}); 
 		} 
 	}); 
 }
 
+var person = {fname:"John", lname:"Doe", age:25}; 
+
 function processRiderStep(id, step, senderId, formattedMsg) {
-	console.log("step", step)
 	switch (step) {
 		// cases starting from 1 will be for riders
 		case 1:
@@ -211,18 +205,36 @@ function processRiderStep(id, step, senderId, formattedMsg) {
 			  		console.log("Could not find and update rider.")
 			  		sendMessage(senderId, {text: "I cannot understand your request. Where are you going?"}); 
 			  	} else {
-			  		sendMessage(senderId, {text: "Thanks for your information. One second as we try to find you drivers."});
+			  		findDrivers(updatedRider.requestedDateTime, updatedRider.requestedFromLocation, updatedRider.requestedToLocation, senderId); 
 			  	}
 			});
 			break;
 	}
 }
 
+function findDrivers(dateTime, from, to, senderId) {
+	Driver.find({ leavingDateTime: dateTime, leavingLocation: from, arrivingLocation: to}, function (err, drivers) {
+		if (err) {
+			console.log("Uh oh. An error occured while finding drivers.")
+			sendMessage(senderId, {text: "An error occured. Please delete this conversation and restart."}); 
+		} else if (drivers.length > 0) {
+			var responseString = "Success! We have found match(es)! These are their Facebook links so you can message them! "; 
+			var d; 
+			for (d in drivers) { 
+				responseString += `FB : ${drivers[d].fbProfile}, Price: ${drivers[d].price} \n`;
+			}
+			sendMessage(senderId, {text: responseString}); 
+		} else {
+			sendMessage(senderId, {text: "Sorry no matches today. Check again later!"}); 
+		} 
+	}); 
+}
+
 // find the user
 function findDriver(id, senderId, formattedMsg) {
 	Driver.findOne({ _id: id}, function (err, doc) {
 		if (doc) {
-			console.log("processing driver step.."); 
+			console.log("Processing driver step.."); 
 			processDriverStep(doc._id, doc.step, senderId, formattedMsg);
 		} else {
 			console.log("Error finding driver.");  
@@ -313,7 +325,6 @@ function processPostback(event) {
 		    	console.log("Error creating driver: " +  error);
 		    	sendMessage(senderId, {text: "Error creating user. Please delete this conversation and try again."}); 
 		    } else {
-		    	console.log("driver id inside proceess postback", driver._id); 
 		    	createUser(senderId, driver._id, "Driver");
 		    	sendMessage(senderId, {text: "When do time and date do you want to leave? Please format it like jan 6 11:30pm."}); 
 		    }
