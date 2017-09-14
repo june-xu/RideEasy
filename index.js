@@ -1,10 +1,5 @@
 'use strict'
 
-// TO DO:
-// make created at for riders and drivers
-// instead of findoneandupdate -- use findone and then save if you cant figure how to find most recent
-// otherwise use findoneandupdate to find most recent
-
 const express = require('express'),
       path = require('path'),
       mongoose = require('mongoose'),
