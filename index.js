@@ -3,7 +3,7 @@
 const express = require('express'),
       path = require('path'),
       mongoose = require('mongoose'),
-      bodyParser = require('body-parser'),
+      bodyParser = require('body-parser'), 
       Driver = require ('./models/driver'),
       Rider  = require ('./models/rider'),
       User = require ('./models/user'),
@@ -24,17 +24,17 @@ app.set('port', (process.env.PORT || 5000))
 app.use(bodyParser.urlencoded({extended: false}))
 
 // Process application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json()) 
 
 // Index route
 app.get('/', function (req, res) {
 	res.send('Hello world, I am a chat bot')
 });
 
-// for Facebook verification
+// For Facebook verification
 app.get('/webhook/', function (req, res) {
 	if (req.query['hub.verify_token'] === token) {
-		res.send(req.query['hub.challenge'])
+		res.send(req.query['hub.challenge']); 
 	}
 	res.send('Error, wrong token')
 });
@@ -61,14 +61,12 @@ app.post("/webhook", function (req, res) {
   	}
 });
 
-
-// classify user 
 function findType(userId) {
-	let message = {
+	var message = {
 	    attachment: {
 	        type: "template",
 	        payload: {
-	            template_type: "generic",
+	            template_type: "generic", 
 	            elements: [{
 	                title: "Are you a rider or a driver?",
 	                buttons: [{
@@ -91,10 +89,10 @@ function findType(userId) {
 function processDriverStep(id, step, senderId, formattedMsg) {
 	switch (step) {
 		case 1:
-		    // hopefully format will be "jan-6 11:30pm"
-			// set leaving date and time
+		    // Hopefully format will be "jan 6 11:30pm"
+			// Set leaving date and time
 			var dateTime = moment(formattedMsg, "MMM D h:ma").format(); 
-			if (dateTime) {
+			if (dateTime) { 
 				Driver.findOneAndUpdate({_id: id}, { "$set": { "leavingDateTime": dateTime, "step": step + 1}}, {new: true}, 
 					function (err, updatedDriver) {
 					if (err) {
@@ -107,8 +105,8 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			}
 			break; 
 		case 2:
-			// update where they are leaving from 
-			// must be one word
+			// Update where they are leaving from 
+			// Must be one word
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "leavingLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
 					console.log("Could not find and update driver.")
@@ -119,7 +117,7 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			});
 			break;    
 		case 3:
-			// update where they want to go 
+			// Update where they want to go 
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "arrivingLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
 					console.log("Could not find and update driver", err);  
@@ -130,7 +128,7 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			});
 			break;
 		case 4:
-			// update where they want to go 
+			// Update how much they charge per guest
 			Driver.findOneAndUpdate({_id: id}, { "$set": { "price": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedDriver) {
 				if (err) {
 			  		console.log("Could not find and update driver", err)
@@ -142,7 +140,6 @@ function processDriverStep(id, step, senderId, formattedMsg) {
 			break;
 	}	
 }
-
 
 function findRiders(dateTime, from, to, senderId) {
 	Rider.find({ requestedDateTime: dateTime, requestedFromLocation: from, requestedToLocation: to}, function (err, riders) {
@@ -160,14 +157,12 @@ function findRiders(dateTime, from, to, senderId) {
 	}); 
 }
 
-var person = {fname:"John", lname:"Doe", age:25}; 
-
 function processRiderStep(id, step, senderId, formattedMsg) {
 	switch (step) {
-		// cases starting from 1 will be for riders
+		// Cases starting from 1 will be for riders
 		case 1:
-		    // hopefully format will be "jan-6 11:30pm"
-			// set leaving date and time
+		    // Hopefully format will be "jan-6 11:30pm"
+			// Set leaving date and time
 			var dateTime = moment(formattedMsg, "MMM D h:ma").format(); 
 			if (dateTime) {
 				Rider.findOneAndUpdate({_id: id}, { "$set": { "requestedDateTime": dateTime, "step": step + 1}}, {new: true}, 
@@ -182,8 +177,8 @@ function processRiderStep(id, step, senderId, formattedMsg) {
 			}
 			break;  
 		case 2:
-			// update where they are leaving from 
-			// must be one word
+			// Update where they are leaving from 
+			// Must be one word
 			Rider.findOneAndUpdate({_id: id}, { "$set": { "requestedFromLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedRider) {
 				if (err) {
 					console.log("Could not find and update rider.")
@@ -194,7 +189,7 @@ function processRiderStep(id, step, senderId, formattedMsg) {
 			});
 			break;    
 		case 3:
-			// update where they want to go 
+			// Update where they want to go 
 			Rider.findOneAndUpdate({_id: id}, { "$set": { "requestedToLocation": formattedMsg, "step": step + 1}}, {new: true}, function (err, updatedRider) {
 				if (err) {
 			  		console.log("Could not find and update rider.")
@@ -225,7 +220,7 @@ function findDrivers(dateTime, from, to, senderId) {
 	}); 
 }
 
-// find the user
+// Find the user
 function findDriver(id, senderId, formattedMsg) {
 	Driver.findOne({ _id: id}, function (err, doc) {
 		if (doc) {
@@ -237,11 +232,11 @@ function findDriver(id, senderId, formattedMsg) {
 	}); 
 }
 
-// find the user
+// Find the user
 function findRider(id, senderId, formattedMsg) {
 	Rider.findOne({ _id: id}, function (err, doc) {
 		if (doc) {
-			processRiderStep(doc._id, doc.step, senderId, formattedMsg);
+			processRiderStep(doc._id, doc.step, senderId, formattedMsg); 
 		} else {
 			console.log("Error finding rider.");  
 		} 
@@ -264,7 +259,7 @@ function createUser(fbID, rdID, type) {
 }
 
 
-// handle initial messaging 
+// Handle initial messaging 
 function processPostback(event) {
   var senderId = event.sender.id;
   var payload = event.postback.payload;
@@ -299,7 +294,7 @@ function processPostback(event) {
 	    	foundRide: false, 
 	    	step: 1
 	  	});
-		rider.save(function(err){
+		rider.save(function(err){ 
 		    if (err) {
 		    	console.log("Error creating rider: " +  error);
 		    	sendMessage(senderId, {text: "Error creating user. Please delete this conversation and try again."}); 
@@ -329,39 +324,37 @@ function processPostback(event) {
 
 
 function processMessage(event) {
-    if (!event.message.is_echo) {
-        var message = event.message;
-        var senderId = event.sender.id;
+    var message = event.message;
+    var senderId = event.sender.id;
 
-        console.log("Received message from senderId: " + senderId);
-        console.log("Message is: " + JSON.stringify(message));
+    console.log("Received message from senderId: " + senderId); 
+    console.log("Message is: " + JSON.stringify(message));
 
-        if (message.text) {
-			var formattedMsg = message.text.toLowerCase().trim();
-	        User.findOne({ fbID: senderId}, {}, { sort: {_id: -1} }, function (err, doc) {
-	        	if (doc && doc.type == "Driver") {
-	        		findDriver(doc.rdID, senderId, formattedMsg); 
-	        	} else if (doc && doc.type == "Rider") {
-	        		findRider(doc.rdID, senderId, formattedMsg); 
-	        	} else {
-	        		console.log("Error finding user."); 
-	        		sendMessage(senderId, {text: "Sorry, I don't understand your request. Try deleting this conversation and start again."});
-	        	} 
-	        }); 
-        } else if (message.attachments) {
-            sendMessage(senderId, {text: "Sorry, I don't understand your request."});
-        }
+    if (message.text) {
+		var formattedMsg = message.text.toLowerCase().trim();
+        User.findOne({ fbID: senderId}, {}, { sort: {_id: -1} }, function (err, doc) {
+        	if (doc && doc.type == "Driver") {
+        		findDriver(doc.rdID, senderId, formattedMsg); 
+        	} else if (doc && doc.type == "Rider") {
+        		findRider(doc.rdID, senderId, formattedMsg); 
+        	} else {
+        		console.log("Error finding user."); 
+        		sendMessage(senderId, {text: "Sorry, I don't understand your request. Try deleting this conversation and start again."});
+        	} 
+        }); 
+    } else if (message.attachments) {
+        sendMessage(senderId, {text: "Sorry, I don't understand your request."});
     }
 }
 
-// sends message to user
+// Sends message to user
 function sendMessage(recipientId, message) {
   request({
-    url: "https://graph.facebook.com/v2.6/me/messages",
-    qs: {access_token:token},
-    method: "POST",
-    json: {
-      recipient: {id: recipientId},
+    url: "https://graph.facebook.com/v2.6/me/messages", 
+    qs: {access_token:token}, 
+    method: "POST", 
+    json: { 
+      recipient: {id: recipientId}, 
       message: message,
     }
   }, function(error, response, body) {
